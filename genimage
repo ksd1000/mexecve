@@ -1,0 +1,3 @@
+gcc example.c -Wall -Wextra -Os
+strip a.out
+../calc/calc -q 'import(common);size=:0;falloc("a.out",&size)-->p;assert(p);size;printf("#include <stddef.h>\nconst char image[]={%#.*E};\nconst size_t image_size=(size_t)(%:zu);\n",#size,p,#size);free(p)' >image.c
