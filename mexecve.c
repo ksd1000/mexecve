@@ -51,6 +51,7 @@ static const char *me_paths[]={"/tmp",".",NULL};
 		goto err;\
 	}
 int mexecve(const void *elf_image,size_t elf_size,char *const *argv,char *const *envp){
+#if defined(SYS_execveat)||!defined(SYS_write)
 	const char **mp;
 	char *p;
 	ssize_t r;
@@ -59,7 +60,6 @@ int mexecve(const void *elf_image,size_t elf_size,char *const *argv,char *const 
 	if(expr_unlikely(!elf_image||elf_size<4||!argv||!envp))
 		return -EINVAL;
 	// C standard does not ensure SYS_* are macros.
-#if defined(SYS_execveat)||!defined(SYS_write)
 	fd=(int)expr_internal_syscall(SYS_memfd_create,"",MFD_CLOEXEC);
 	if(expr_unlikely(fd<0))
 		return fd;
@@ -69,7 +69,6 @@ int mexecve(const void *elf_image,size_t elf_size,char *const *argv,char *const 
 	if(out!=-EACCES&&out!=-ENOSYS&&out!=-EPERM)
 		goto err;
 	expr_internal_syscall(SYS_close,fd);
-#endif
 	for(mp=me_paths;*mp;++mp){
 		fd=me_open(*mp,O_TMPFILE|O_RDWR|O_CLOEXEC,0700);
 		if(fd>=0)
@@ -104,4 +103,7 @@ open_ok:
 err:
 	expr_internal_syscall(SYS_close,fd);
 	return out;
+#else
+#error "not implemented"
+#endif
 }
